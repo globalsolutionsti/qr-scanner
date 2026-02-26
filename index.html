@@ -1,62 +1,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR Scanner</title>
+<meta charset="UTF-8">
+<title>Sistema Profesional de Asistencia</title>
 <script src="https://unpkg.com/html5-qrcode"></script>
+<style>
+body { font-family: Arial; text-align: center; background:#f4f4f4; }
+#reader { width:300px; margin:auto; }
+button { padding:10px; margin:10px; font-size:16px; }
+#mensaje { font-size:18px; margin-top:15px; font-weight:bold; }
+</style>
 </head>
-<body style="text-align:center; font-family:Arial;">
 
-<h2>Escaneo QR</h2>
-<button onclick="startScanner()">Activar Cámara</button>
-<div id="reader" style="width:300px; margin:auto;"></div>
+<body>
+
+<h2>Escaneo Profesional</h2>
+
+<input type="password" id="pin" placeholder="Ingrese PIN"><br>
+<button onclick="iniciar()">Activar Cámara</button>
+
+<div id="reader"></div>
+<div id="mensaje"></div>
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzZjJhqa-oHAthDm9Tyw8VdWgygYHGQRuKUX5QjdgAknVwvg7e-xJmMwakecJAN3nN-hA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwA5EOAOW2aiElRZjwxnK3Gd2bFfQ8MdxFWXqwqJvk52Nv4j_JbcOV8Jtx6r3ByA77ftw/exec";
 
-let deviceId = localStorage.getItem("deviceId");
-if (!deviceId) {
-  deviceId = "device_" + Math.random().toString(36).substring(2,10);
-  localStorage.setItem("deviceId", deviceId);
+let html5QrCode;
+
+function iniciar() {
+  const pin = document.getElementById("pin").value;
+
+  if (!pin) {
+    alert("Ingrese PIN");
+    return;
+  }
+
+  html5QrCode = new Html5Qrcode("reader");
+
+  Html5Qrcode.getCameras().then(devices => {
+    if (devices && devices.length) {
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        qrCodeMessage => {
+          registrar(pin, qrCodeMessage);
+        },
+        errorMessage => {}
+      );
+    }
+  }).catch(err => {
+    alert("Error activando cámara");
+  });
 }
 
-const usuario = prompt("Ingrese su nombre:");
+function registrar(pin, servidorID) {
 
-function startScanner() {
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ pin: pin, servidorID: servidorID })
+  })
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById("mensaje").innerText = data.mensaje;
 
-  const html5QrCode = new Html5Qrcode("reader");
-
-  html5QrCode.start(
-    { facingMode: "environment" },
-    { fps: 10, qrbox: 250 },
-    qrCodeMessage => {
-
-      html5QrCode.stop();
-
-      fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          qrData: qrCodeMessage,
-          deviceId: deviceId,
-          usuario: usuario
-        })
-      })
-      .then(res => res.text())
-      .then(response => {
-
-        if (response === "OK") {
-          alert("Registro exitoso");
-        } else {
-          alert("Dispositivo no autorizado");
-        }
-
-      });
-
-    }
-  )
-  .catch(err => alert("Error activando cámara: " + err));
+    // MODO ESCANEO RAPIDO (NO DETIENE CAMARA)
+  })
+  .catch(error => {
+    document.getElementById("mensaje").innerText = "Error conexión API";
+  });
 }
 
 </script>

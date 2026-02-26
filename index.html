@@ -4,11 +4,14 @@
 <meta charset="UTF-8">
 <title>Sistema Profesional de Asistencia</title>
 <script src="https://unpkg.com/html5-qrcode"></script>
+
 <style>
 body { font-family: Arial; text-align: center; background:#f4f4f4; }
 #reader { width:300px; margin:auto; }
 button { padding:10px; margin:10px; font-size:16px; }
 #mensaje { font-size:18px; margin-top:15px; font-weight:bold; }
+.ok { color: green; }
+.error { color: red; }
 </style>
 </head>
 
@@ -27,9 +30,11 @@ button { padding:10px; margin:10px; font-size:16px; }
 const API_URL = "https://script.google.com/macros/s/AKfycbwy0jQ_Yfcw17fBstdbt4s_AMuFLA3NootvY9qNlcELCx1E2lISCauhpzM9hc1Tu6dmnA/exec";
 
 let html5QrCode;
+let escaneando = false;
 
 function iniciar() {
-  const pin = document.getElementById("pin").value;
+
+  const pin = document.getElementById("pin").value.trim();
 
   if (!pin) {
     alert("Ingrese PIN");
@@ -40,13 +45,19 @@ function iniciar() {
 
   Html5Qrcode.getCameras().then(devices => {
     if (devices && devices.length) {
+
       html5QrCode.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: 250 },
-        qrCodeMessage => {
+        (qrCodeMessage) => {
+
+          if (escaneando) return; // evita múltiples lecturas
+          escaneando = true;
+
           registrar(pin, qrCodeMessage);
+
         },
-        errorMessage => {}
+        (errorMessage) => {}
       );
     }
   }).catch(err => {
@@ -58,16 +69,36 @@ function registrar(pin, servidorID) {
 
   fetch(API_URL, {
     method: "POST",
-    body: JSON.stringify({ pin: pin, servidorID: servidorID })
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      pin: pin,
+      servidorID: servidorID
+    })
   })
   .then(res => res.json())
   .then(data => {
-    document.getElementById("mensaje").innerText = data.mensaje;
 
-    // MODO ESCANEO RAPIDO (NO DETIENE CAMARA)
+    const mensajeDiv = document.getElementById("mensaje");
+    mensajeDiv.innerText = data.mensaje;
+
+    if (data.mensaje.includes("REGISTRADA")) {
+      mensajeDiv.className = "ok";
+    } else {
+      mensajeDiv.className = "error";
+    }
+
+    // Espera 2 segundos y permite nuevo escaneo
+    setTimeout(() => {
+      escaneando = false;
+      mensajeDiv.innerText = "";
+    }, 2000);
+
   })
   .catch(error => {
     document.getElementById("mensaje").innerText = "Error conexión API";
+    escaneando = false;
   });
 }
 

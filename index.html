@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Scanner</title>
+<script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body style="text-align:center; font-family:Arial;">
+
+<h2>Escaneo QR</h2>
+<button onclick="startScanner()">Activar Cámara</button>
+<div id="reader" style="width:300px; margin:auto;"></div>
+
+<script>
+
+const API_URL = "https://script.google.com/macros/s/AKfycbzZjJhqa-oHAthDm9Tyw8VdWgygYHGQRuKUX5QjdgAknVwvg7e-xJmMwakecJAN3nN-hA/exec";
+
+let deviceId = localStorage.getItem("deviceId");
+if (!deviceId) {
+  deviceId = "device_" + Math.random().toString(36).substring(2,10);
+  localStorage.setItem("deviceId", deviceId);
+}
+
+const usuario = prompt("Ingrese su nombre:");
+
+function startScanner() {
+
+  const html5QrCode = new Html5Qrcode("reader");
+
+  html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    qrCodeMessage => {
+
+      html5QrCode.stop();
+
+      fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          qrData: qrCodeMessage,
+          deviceId: deviceId,
+          usuario: usuario
+        })
+      })
+      .then(res => res.text())
+      .then(response => {
+
+        if (response === "OK") {
+          alert("Registro exitoso");
+        } else {
+          alert("Dispositivo no autorizado");
+        }
+
+      });
+
+    }
+  )
+  .catch(err => alert("Error activando cámara: " + err));
+}
+
+</script>
+
+</body>
+</html>

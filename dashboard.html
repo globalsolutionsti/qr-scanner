@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Dashboard Asistencia</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+  margin:0;
+  background:#0f172a;
+  color:white;
+  font-family:Arial;
+  text-align:center;
+}
+
+h1{
+  padding:20px;
+}
+
+.card{
+  background:#1e293b;
+  margin:20px;
+  padding:20px;
+  border-radius:12px;
+}
+
+canvas{
+  max-width:600px;
+  margin:auto;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Dashboard en Tiempo Real</h1>
+
+<div class="card">
+<h2>Total Asistentes</h2>
+<h1 id="total">0</h1>
+</div>
+
+<div class="card">
+<h2>Por Ministerio</h2>
+<canvas id="ministerios"></canvas>
+</div>
+
+<div class="card">
+<h2>Por Sesión</h2>
+<canvas id="sesiones"></canvas>
+</div>
+
+<script>
+
+const API_URL = "https://script.google.com/macros/s/AKfycbyLv2XRwq0RrlBRMUCWpy31KQ5JgcMRXog3J-mG-zUnzZwLHmzxQ5iP4XnQuy2R1r4n/exec";
+
+function cargarDashboard(){
+
+fetch(API_URL + "?accion=dashboard&t=" + new Date().getTime())
+.then(res => res.json())
+.then(data => {
+
+document.getElementById("total").innerText = data.total;
+
+crearGrafico("ministerios", data.porMinisterio);
+crearGrafico("sesiones", data.porSesion);
+
+});
+}
+
+function crearGrafico(id, datos){
+
+const ctx = document.getElementById(id).getContext("2d");
+
+new Chart(ctx,{
+type:"bar",
+data:{
+labels:Object.keys(datos),
+datasets:[{
+label:"Asistentes",
+data:Object.values(datos),
+backgroundColor:"#38bdf8"
+}]
+},
+options:{
+plugins:{legend:{display:false}}
+}
+});
+}
+
+setInterval(cargarDashboard, 5000);
+cargarDashboard();
+
+</script>
+
+</body>
+</html>

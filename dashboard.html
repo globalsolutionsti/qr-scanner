@@ -2,95 +2,128 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Dashboard Asistencia</title>
+<title>Dashboard Iglesia Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{
+body {
   margin:0;
+  font-family: Arial;
   background:#0f172a;
   color:white;
-  font-family:Arial;
-  text-align:center;
 }
 
-h1{
+.header {
+  display:flex;
+  justify-content:space-between;
+  padding:20px;
+  background:#111827;
+}
+
+.kpi {
+  font-size:40px;
+  font-weight:bold;
+}
+
+.grid {
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:20px;
   padding:20px;
 }
 
-.card{
-  background:#1e293b;
-  margin:20px;
+.card {
+  background:#1f2937;
   padding:20px;
-  border-radius:12px;
+  border-radius:10px;
 }
 
-canvas{
-  max-width:600px;
-  margin:auto;
+.ranking-item {
+  display:flex;
+  justify-content:space-between;
+  padding:5px 0;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Dashboard en Tiempo Real</h1>
-
-<div class="card">
-<h2>Total Asistentes</h2>
-<h1 id="total">0</h1>
+<div class="header">
+  <div>
+    <h2>Dashboard Iglesia</h2>
+  </div>
+  <div>
+    <div>Total General</div>
+    <div class="kpi" id="total">0</div>
+  </div>
+  <div>
+    <div>Crecimiento</div>
+    <div class="kpi" id="crecimiento">0%</div>
+  </div>
 </div>
 
-<div class="card">
-<h2>Por Ministerio</h2>
-<canvas id="ministerios"></canvas>
-</div>
+<div class="grid">
 
-<div class="card">
-<h2>Por Sesión</h2>
-<canvas id="sesiones"></canvas>
+  <div class="card">
+    <h3>Comparativo Sesiones</h3>
+    <canvas id="chartSesiones"></canvas>
+  </div>
+
+  <div class="card">
+    <h3>Ranking Ministerios</h3>
+    <div id="ranking"></div>
+  </div>
+
 </div>
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyLv2XRwq0RrlBRMUCWpy31KQ5JgcMRXog3J-mG-zUnzZwLHmzxQ5iP4XnQuy2R1r4n/exec";
+const URL = "https://script.google.com/macros/s/AKfycbxkNHtDXkj2q0upsnTNopUYHgRgCgzFUfX7d0k7d754A0EssK6iv4aUv5Rq8zOVlTSL/exec?accion=dashboardpro";
 
-function cargarDashboard(){
+async function cargarDatos() {
 
-fetch(API_URL + "?accion=dashboard&t=" + new Date().getTime())
-.then(res => res.json())
-.then(data => {
+  const res = await fetch(URL);
+  const data = await res.json();
 
-document.getElementById("total").innerText = data.total;
+  document.getElementById("total").innerText = data.totalGeneral;
+  document.getElementById("crecimiento").innerText = data.crecimiento + "%";
 
-crearGrafico("ministerios", data.porMinisterio);
-crearGrafico("sesiones", data.porSesion);
+  // Sesiones Chart
+  const nombres = data.sesiones.map(s => s.nombre);
+  const totales = data.sesiones.map(s => s.total);
 
-});
+  new Chart(document.getElementById("chartSesiones"), {
+    type: "bar",
+    data: {
+      labels: nombres,
+      datasets: [{
+        label: "Asistencia",
+        data: totales,
+        backgroundColor: "#3b82f6"
+      }]
+    }
+  });
+
+  // Ranking
+  let html = "";
+  data.rankingMinisterios.forEach((m,i) => {
+    html += `
+      <div class="ranking-item">
+        <span>#${i+1} ${m.ministerio}</span>
+        <strong>${m.total}</strong>
+      </div>
+    `;
+  });
+
+  document.getElementById("ranking").innerHTML = html;
 }
 
-function crearGrafico(id, datos){
+cargarDatos();
 
-const ctx = document.getElementById(id).getContext("2d");
-
-new Chart(ctx,{
-type:"bar",
-data:{
-labels:Object.keys(datos),
-datasets:[{
-label:"Asistentes",
-data:Object.values(datos),
-backgroundColor:"#38bdf8"
-}]
-},
-options:{
-plugins:{legend:{display:false}}
-}
-});
-}
-
-setInterval(cargarDashboard, 5000);
-cargarDashboard();
+// Auto refresh cada 30 segundos (Modo TV)
+setInterval(() => {
+  location.reload();
+}, 30000);
 
 </script>
 

@@ -27,7 +27,7 @@ button { padding:10px; margin:10px; font-size:16px; }
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwy0jQ_Yfcw17fBstdbt4s_AMuFLA3NootvY9qNlcELCx1E2lISCauhpzM9hc1Tu6dmnA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxdvHM03cNyBN_VUGi2GkKeBoaJi962OKC3bFbA9ztMdWLfzUqbiQdsawQJmC72M4lmXg/exec";
 
 let html5QrCode;
 let escaneando = false;
@@ -68,15 +68,19 @@ function iniciar() {
 function registrar(pin, servidorID) {
 
   fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      pin: pin,
-      servidorID: servidorID
-    })
+  method: "POST",
+  mode: "no-cors",
+  body: JSON.stringify({
+    pin: pin,
+    servidorID: servidorID
   })
+})
+.then(() => {
+  document.getElementById("mensaje").innerText = "Procesando...";
+})
+.catch(() => {
+  document.getElementById("mensaje").innerText = "Error conexión API";
+});
   .then(res => res.json())
   .then(data => {
 

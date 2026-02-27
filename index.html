@@ -17,7 +17,7 @@ button { padding:10px; margin:10px; font-size:16px; }
 
 <body>
 
-<h2>Escaneo Profesional</h2>
+<h2>Registro de Asistencia Iglesia Amistad Los Fuertes</h2>
 
 <input type="password" id="pin" placeholder="Ingrese PIN"><br>
 <button onclick="iniciar()">Activar Cámara</button>
@@ -67,35 +67,29 @@ function iniciar() {
 
 function registrar(pin, servidorID) {
 
-  const url = API_URL + 
+  const url = API_URL +
     "?pin=" + encodeURIComponent(pin) +
-    "&servidorID=" + encodeURIComponent(servidorID);
+    "&servidorID=" + encodeURIComponent(servidorID) +
+    "&t=" + new Date().getTime(); // evita cache
 
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
+  // Crear iframe invisible
+  const iframe = document.createElement("iframe");
+  iframe.style.display = "none";
+  iframe.src = url;
 
-      const mensajeDiv = document.getElementById("mensaje");
-      mensajeDiv.innerText = data.mensaje;
+  document.body.appendChild(iframe);
 
-      if (data.mensaje.includes("REGISTRADA")) {
-        mensajeDiv.className = "ok";
-      } else {
-        mensajeDiv.className = "error";
-      }
+  const mensajeDiv = document.getElementById("mensaje");
+  mensajeDiv.innerText = "Procesando...";
 
-      setTimeout(() => {
-        mensajeDiv.innerText = "";
-        escaneando = false;
-      }, 2000);
+  setTimeout(() => {
+    mensajeDiv.innerText = "Registro enviado";
+    escaneando = false;
 
-    })
-    .catch(error => {
-      document.getElementById("mensaje").innerText = "Error conexión API";
-      escaneando = false;
-    });
+    // eliminar iframe después de usarlo
+    document.body.removeChild(iframe);
+  }, 2000);
 }
-
 </script>
 
 </body>

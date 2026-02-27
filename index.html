@@ -27,7 +27,7 @@ button { padding:10px; margin:10px; font-size:16px; }
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbxdvHM03cNyBN_VUGi2GkKeBoaJi962OKC3bFbA9ztMdWLfzUqbiQdsawQJmC72M4lmXg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycby1F-Ca38N6RsN7T4C7KsRMxmRywvUtNlc8L7Fsp2jG6hQKI6NVS00uYtuvzIL_TGqneg/exec";
 
 let html5QrCode;
 let escaneando = false;
@@ -67,43 +67,33 @@ function iniciar() {
 
 function registrar(pin, servidorID) {
 
-  fetch(API_URL, {
-  method: "POST",
-  mode: "no-cors",
-  body: JSON.stringify({
-    pin: pin,
-    servidorID: servidorID
-  })
-})
-.then(() => {
-  document.getElementById("mensaje").innerText = "Procesando...";
-})
-.catch(() => {
-  document.getElementById("mensaje").innerText = "Error conexión API";
-});
-  .then(res => res.json())
-  .then(data => {
+  const url = API_URL + 
+    "?pin=" + encodeURIComponent(pin) +
+    "&servidorID=" + encodeURIComponent(servidorID);
 
-    const mensajeDiv = document.getElementById("mensaje");
-    mensajeDiv.innerText = data.mensaje;
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
 
-    if (data.mensaje.includes("REGISTRADA")) {
-      mensajeDiv.className = "ok";
-    } else {
-      mensajeDiv.className = "error";
-    }
+      const mensajeDiv = document.getElementById("mensaje");
+      mensajeDiv.innerText = data.mensaje;
 
-    // Espera 2 segundos y permite nuevo escaneo
-    setTimeout(() => {
+      if (data.mensaje.includes("REGISTRADA")) {
+        mensajeDiv.className = "ok";
+      } else {
+        mensajeDiv.className = "error";
+      }
+
+      setTimeout(() => {
+        mensajeDiv.innerText = "";
+        escaneando = false;
+      }, 2000);
+
+    })
+    .catch(error => {
+      document.getElementById("mensaje").innerText = "Error conexión API";
       escaneando = false;
-      mensajeDiv.innerText = "";
-    }, 2000);
-
-  })
-  .catch(error => {
-    document.getElementById("mensaje").innerText = "Error conexión API";
-    escaneando = false;
-  });
+    });
 }
 
 </script>

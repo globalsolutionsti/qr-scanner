@@ -6,90 +6,143 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
-body { font-family: Arial; text-align: center; background:#f4f4f4; }
-#reader { width:300px; margin:auto; }
-button { padding:10px; margin:10px; font-size:16px; }
-#mensaje { font-size:18px; margin-top:15px; font-weight:bold; }
-.ok { color: green; }
-.error { color: red; }
+body {
+  margin:0;
+  background:#111;
+  color:white;
+  font-family:Arial;
+  text-align:center;
+}
+
+.container {
+  padding:20px;
+}
+
+input {
+  padding:12px;
+  font-size:18px;
+  border-radius:6px;
+  border:none;
+  width:200px;
+  text-align:center;
+}
+
+button {
+  padding:12px 20px;
+  font-size:16px;
+  border:none;
+  border-radius:6px;
+  margin:10px;
+  cursor:pointer;
+}
+
+#activar { background:#1e88e5; color:white; }
+#cerrar { background:#e53935; color:white; }
+
+#reader {
+  width:300px;
+  margin:auto;
+  margin-top:20px;
+}
+
+#mensaje {
+  font-size:20px;
+  margin-top:20px;
+  font-weight:bold;
+}
+.ok { color:#00e676; }
+.error { color:#ff5252; }
 </style>
 </head>
 
 <body>
 
-<h2>Registro de Asistencia Iglesia Amistad Los Fuertes</h2>
+<div class="container">
+
+<h2>Sistema de Asistencia</h2>
 
 <input type="password" id="pin" placeholder="Ingrese PIN"><br>
-<button onclick="iniciar()">Activar Cámara</button>
+<button id="activar" onclick="iniciar()">Activar Sistema</button>
+<button id="cerrar" onclick="cerrarSistema()">Cerrar Sistema</button>
 
 <div id="reader"></div>
 <div id="mensaje"></div>
 
+</div>
+
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycby1F-Ca38N6RsN7T4C7KsRMxmRywvUtNlc8L7Fsp2jG6hQKI6NVS00uYtuvzIL_TGqneg/exec";
+const API_URL = "PEGA_AQUI_TU_URL_EXEC";
 
 let html5QrCode;
 let escaneando = false;
+let pinGlobal = "";
 
 function iniciar() {
 
   const pin = document.getElementById("pin").value.trim();
+  if (!pin) { alert("Ingrese PIN"); return; }
 
-  if (!pin) {
-    alert("Ingrese PIN");
-    return;
-  }
+  pinGlobal = pin;
 
   html5QrCode = new Html5Qrcode("reader");
 
   Html5Qrcode.getCameras().then(devices => {
-    if (devices && devices.length) {
 
-      html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        (qrCodeMessage) => {
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      qrCodeMessage => {
 
-          if (escaneando) return; // evita múltiples lecturas
-          escaneando = true;
+        if (escaneando) return;
+        escaneando = true;
 
-          registrar(pin, qrCodeMessage);
+        registrar(qrCodeMessage);
 
-        },
-        (errorMessage) => {}
-      );
-    }
-  }).catch(err => {
-    alert("Error activando cámara");
+      }
+    );
   });
 }
 
-function registrar(pin, servidorID) {
+function registrar(id) {
 
   const url = API_URL +
-    "?pin=" + encodeURIComponent(pin) +
-    "&servidorID=" + encodeURIComponent(servidorID) +
-    "&t=" + new Date().getTime(); // evita cache
+    "?pin=" + encodeURIComponent(pinGlobal) +
+    "&id=" + encodeURIComponent(id) +
+    "&t=" + new Date().getTime();
 
-  // Crear iframe invisible
-  const iframe = document.createElement("iframe");
-  iframe.style.display = "none";
-  iframe.src = url;
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
 
-  document.body.appendChild(iframe);
+      const mensajeDiv = document.getElementById("mensaje");
+      mensajeDiv.innerText = data.mensaje;
 
-  const mensajeDiv = document.getElementById("mensaje");
-  mensajeDiv.innerText = "Procesando...";
+      if (data.mensaje.includes("Registrada")) {
+        mensajeDiv.className = "ok";
+      } else {
+        mensajeDiv.className = "error";
+      }
 
-  setTimeout(() => {
-    mensajeDiv.innerText = "Registro enviado";
-    escaneando = false;
-
-    // eliminar iframe después de usarlo
-    document.body.removeChild(iframe);
-  }, 2000);
+      setTimeout(() => {
+        mensajeDiv.innerText = "";
+        escaneando = false;
+      }, 2500);
+    })
+    .catch(() => {
+      document.getElementById("mensaje").innerText = "Error conexión servidor";
+      escaneando = false;
+    });
 }
+
+function cerrarSistema() {
+  if (html5QrCode) {
+    html5QrCode.stop();
+    document.getElementById("reader").innerHTML = "";
+  }
+  document.getElementById("mensaje").innerText = "Sistema Cerrado";
+}
+
 </script>
 
 </body>

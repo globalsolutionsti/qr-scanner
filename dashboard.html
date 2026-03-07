@@ -1,129 +1,346 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta charset="UTF-8">
 <title>Dashboard Iglesia Pro</title>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
 <style>
-body {
-  margin:0;
-  font-family: Arial;
-  background:#0f172a;
-  color:white;
+
+body{
+margin:0;
+font-family: 'Segoe UI';
+background:#0b1320;
+color:white;
 }
 
-.header {
-  display:flex;
-  justify-content:space-between;
-  padding:20px;
-  background:#111827;
+.header{
+display:flex;
+justify-content:space-between;
+padding:25px;
+background:#111827;
+border-bottom:1px solid #1f2937;
 }
 
-.kpi {
-  font-size:40px;
-  font-weight:bold;
+.title{
+font-size:24px;
+font-weight:bold;
 }
 
-.grid {
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap:20px;
-  padding:20px;
+.kpi{
+font-size:40px;
+font-weight:bold;
+color:#60a5fa;
 }
 
-.card {
-  background:#1f2937;
-  padding:20px;
-  border-radius:10px;
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+padding:20px;
 }
 
-.ranking-item {
-  display:flex;
-  justify-content:space-between;
-  padding:5px 0;
+.grid-bottom{
+display:grid;
+grid-template-columns:2fr 1fr;
+gap:20px;
+padding:20px;
 }
+
+.card{
+background:#1f2937;
+padding:20px;
+border-radius:12px;
+box-shadow:0 10px 25px rgba(0,0,0,0.4);
+}
+
+h3{
+margin-top:0;
+}
+
+.ranking-item{
+display:flex;
+justify-content:space-between;
+padding:6px 0;
+border-bottom:1px solid #374151;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+th{
+background:#111827;
+padding:8px;
+}
+
+td{
+text-align:center;
+padding:8px;
+border-bottom:1px solid #374151;
+}
+
+.check{
+color:#22c55e;
+font-weight:bold;
+font-size:18px;
+}
+
+.cross{
+color:#ef4444;
+font-weight:bold;
+font-size:18px;
+}
+
+input,select,button{
+padding:8px;
+border-radius:6px;
+border:none;
+margin:5px 0;
+}
+
+button{
+background:#2563eb;
+color:white;
+cursor:pointer;
+}
+
+button:hover{
+background:#1d4ed8;
+}
+
 </style>
 </head>
 
 <body>
 
 <div class="header">
-  <div>
-    <h2>Dashboard Iglesia</h2>
-  </div>
-  <div>
-    <div>Total General</div>
-    <div class="kpi" id="total">0</div>
-  </div>
-  <div>
-    <div>Crecimiento</div>
-    <div class="kpi" id="crecimiento">0%</div>
-  </div>
+
+<div class="title">Dashboard Iglesia</div>
+
+<div>
+<div>Total General</div>
+<div class="kpi" id="total"></div>
+</div>
+
+<div>
+<div>Crecimiento</div>
+<div class="kpi" id="crecimiento"></div>
+</div>
+
 </div>
 
 <div class="grid">
 
-  <div class="card">
-    <h3>Comparativo Sesiones</h3>
-    <canvas id="chartSesiones"></canvas>
-  </div>
+<div class="card">
+<h3>Comparativo Sesiones</h3>
+<canvas id="chartSesiones"></canvas>
+</div>
 
-  <div class="card">
-    <h3>Ranking Ministerios</h3>
-    <div id="ranking"></div>
-  </div>
+<div class="card">
+<h3>Ranking Ministerios</h3>
+<div id="ranking"></div>
+</div>
+
+</div>
+
+<div class="grid-bottom">
+
+<div class="card">
+
+<h3>Asistencia por Ministerio</h3>
+
+<select id="ministerioSelect"></select>
+
+<div id="tablaMinisterio"></div>
+
+</div>
+
+<div class="card">
+
+<h3>Buscar Servidor</h3>
+
+<input id="buscarServidor" placeholder="Nombre del servidor">
+
+<button onclick="buscarServidor()">Buscar</button>
+
+<div id="resultadoServidor"></div>
+
+</div>
 
 </div>
 
 <script>
 
-const URL = "https://script.google.com/macros/s/AKfycbxdjyCPva8tV9_1yzXxUdvC9T9VB2pB7-CL30zHaVthBV4dzdKEGyUddpinkAOusK7l/exec?accion=dashboardpro";
+const URL1="https://script.google.com/macros/s/AKfycbxUaSdMaOFVRIiYYM1qGaMLlDENXxbouY3vXfzvm8t8TpenfUreP26WvdmNQOgwoaUU/exec?accion=dashboardpro";
+const URL2="https://script.google.com/macros/s/AKfycbxUaSdMaOFVRIiYYM1qGaMLlDENXxbouY3vXfzvm8t8TpenfUreP26WvdmNQOgwoaUU/exec?accion=datoscompletos";
 
-async function cargarDatos() {
+let datosGlobal;
 
-  const res = await fetch(URL);
-  const data = await res.json();
+async function iniciar(){
 
-  document.getElementById("total").innerText = data.totalGeneral;
-  document.getElementById("crecimiento").innerText = data.crecimiento + "%";
+const r1=await fetch(URL1);
+const data=await r1.json();
 
-  // Sesiones Chart
-  const nombres = data.sesiones.map(s => s.nombre);
-  const totales = data.sesiones.map(s => s.total);
+document.getElementById("total").innerText=data.totalGeneral;
+document.getElementById("crecimiento").innerText=data.crecimiento+"%";
 
-  new Chart(document.getElementById("chartSesiones"), {
-    type: "bar",
-    data: {
-      labels: nombres,
-      datasets: [{
-        label: "Asistencia",
-        data: totales,
-        backgroundColor: "#3b82f6"
-      }]
-    }
-  });
+const sesionesOrdenadas=data.sesiones.sort((a,b)=>a.id-b.id);
 
-  // Ranking
-  let html = "";
-  data.rankingMinisterios.forEach((m,i) => {
-    html += `
-      <div class="ranking-item">
-        <span>#${i+1} ${m.ministerio}</span>
-        <strong>${m.total}</strong>
-      </div>
-    `;
-  });
+const nombres=sesionesOrdenadas.map(s=>s.nombre);
+const totales=sesionesOrdenadas.map(s=>s.total);
 
-  document.getElementById("ranking").innerHTML = html;
+new Chart(document.getElementById("chartSesiones"),{
+
+type:"bar",
+
+data:{
+labels:nombres,
+datasets:[{
+label:"Asistencia",
+data:totales,
+backgroundColor:"#3b82f6"
+}]
+},
+
+plugins:[ChartDataLabels],
+
+options:{
+plugins:{
+datalabels:{
+color:"#fff",
+anchor:"end",
+align:"top",
+font:{weight:"bold"}
+}
+}
 }
 
-cargarDatos();
+});
 
-// Auto refresh cada 30 segundos (Modo TV)
-setInterval(() => {
-  location.reload();
-}, 30000);
+let html="";
+
+data.rankingMinisterios.forEach((m,i)=>{
+
+html+=`
+<div class="ranking-item">
+<span>#${i+1} ${m.ministerio}</span>
+<strong>${m.total}</strong>
+</div>
+`;
+
+});
+
+document.getElementById("ranking").innerHTML=html;
+
+const r2=await fetch(URL2);
+datosGlobal=await r2.json();
+
+cargarMinisterios();
+
+}
+
+function cargarMinisterios(){
+
+const select=document.getElementById("ministerioSelect");
+
+const ministerios=Object.keys(datosGlobal.servidores);
+
+ministerios.forEach(m=>{
+
+const op=document.createElement("option");
+op.value=m;
+op.text=m;
+
+select.appendChild(op);
+
+});
+
+select.addEventListener("change",mostrarMinisterio);
+
+mostrarMinisterio();
+
+}
+
+function mostrarMinisterio(){
+
+const m=document.getElementById("ministerioSelect").value;
+
+const sesiones=Object.keys(datosGlobal.sesiones);
+
+const servidores=datosGlobal.servidores[m];
+
+let html="<table>";
+
+html+="<tr><th>Servidor</th>";
+
+sesiones.forEach(s=>{
+
+html+=`<th>${datosGlobal.sesiones[s]}</th>`;
+
+});
+
+html+="</tr>";
+
+servidores.forEach(n=>{
+
+html+=`<tr><td>${n}</td>`;
+
+sesiones.forEach(s=>{
+
+const asistio=datosGlobal.asistenciaServidor[n] && datosGlobal.asistenciaServidor[n][s];
+
+html+=`<td>${asistio?'<span class="check">✔</span>':'<span class="cross">✖</span>'}</td>`;
+
+});
+
+html+="</tr>";
+
+});
+
+html+="</table>";
+
+document.getElementById("tablaMinisterio").innerHTML=html;
+
+}
+
+function buscarServidor(){
+
+const nombre=document.getElementById("buscarServidor").value;
+
+const sesiones=Object.keys(datosGlobal.sesiones);
+
+let html="<table>";
+
+html+="<tr><th>Sesión</th><th>Asistencia</th></tr>";
+
+sesiones.forEach(s=>{
+
+const asistio=datosGlobal.asistenciaServidor[nombre] && datosGlobal.asistenciaServidor[nombre][s];
+
+html+=`
+<tr>
+<td>${datosGlobal.sesiones[s]}</td>
+<td>${asistio?'<span class="check">✔</span>':'<span class="cross">✖</span>'}</td>
+</tr>
+`;
+
+});
+
+html+="</table>";
+
+document.getElementById("resultadoServidor").innerHTML=html;
+
+}
+
+iniciar();
+
+setInterval(()=>location.reload(),30000);
 
 </script>
 

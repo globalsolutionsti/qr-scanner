@@ -141,8 +141,8 @@ cursor:pointer;
 
 <script>
 
-const URL1="https://script.google.com/macros/s/AKfycbw3j-KijDNx7CaKtqU8oU6tzdqSaDFFcF4lJKm_SpWH4BAs7ql-AJsvjAM_7-xJ0Nw0/exec?accion=dashboardpro";
-const URL2="https://script.google.com/macros/s/AKfycbw3j-KijDNx7CaKtqU8oU6tzdqSaDFFcF4lJKm_SpWH4BAs7ql-AJsvjAM_7-xJ0Nw0/exec?accion=datoscompletos";
+const URL1="https://script.google.com/macros/s/AKfycbxBXpYdavYhkRUqEIqRqCc72UqQ68cw1lIa4NQ9EF-RjoRwqfM0YawlpocQRuEhACGt/exec?accion=dashboardpro";
+const URL2="https://script.google.com/macros/s/AKfycbxBXpYdavYhkRUqEIqRqCc72UqQ68cw1lIa4NQ9EF-RjoRwqfM0YawlpocQRuEhACGt/exec?accion=datoscompletos";
 
 let datosGlobal;
 let chart;
@@ -203,11 +203,13 @@ data.sesiones.forEach(s=>{
 
 let val=0;
 
-if(datosGlobal &&
+if(
+datosGlobal &&
 datosGlobal.ministerios[m.ministerio] &&
-datosGlobal.ministerios[m.ministerio][s.id]){
+datosGlobal.ministerios[m.ministerio][String(s.id)]
+){
 
-val=datosGlobal.ministerios[m.ministerio][s.id];
+val=datosGlobal.ministerios[m.ministerio][String(s.id)];
 
 }
 

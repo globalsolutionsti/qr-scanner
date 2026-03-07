@@ -149,12 +149,16 @@ let chart;
 
 async function iniciar(){
 
-await actualizarDashboard();
 await cargarDatosGlobal();
+await actualizarDashboard();
 
 }
 
 async function actualizarDashboard(){
+
+if(!datosGlobal){
+await cargarDatosGlobal();
+}
 
 const res=await fetch(URL1);
 const data=await res.json();

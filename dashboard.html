@@ -45,7 +45,7 @@ padding:20px;
 
 .grid-bottom{
 display:grid;
-grid-template-columns:2fr 1fr;
+grid-template-columns:1fr 1fr;
 gap:20px;
 padding:20px;
 }
@@ -248,8 +248,9 @@ cargarMinisterios();
 function cargarMinisterios(){
 
 const select=document.getElementById("ministerioSelect");
+select.innerHTML="";
 
-const ministerios=Object.keys(datosGlobal.servidores);
+const ministerios=Object.keys(datosGlobal.servidoresPorMinisterio);
 
 ministerios.forEach(m=>{
 
@@ -260,10 +261,6 @@ op.text=m;
 select.appendChild(op);
 
 });
-
-select.addEventListener("change",mostrarMinisterio);
-
-mostrarMinisterio();
 
 }
 

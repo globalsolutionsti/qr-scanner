@@ -12,7 +12,7 @@
 
 body{
 margin:0;
-font-family: 'Segoe UI';
+font-family:'Segoe UI';
 background:#0b1320;
 color:white;
 }
@@ -23,11 +23,6 @@ justify-content:space-between;
 padding:25px;
 background:#111827;
 border-bottom:1px solid #1f2937;
-}
-
-.title{
-font-size:24px;
-font-weight:bold;
 }
 
 .kpi{
@@ -57,17 +52,6 @@ border-radius:12px;
 box-shadow:0 10px 25px rgba(0,0,0,0.4);
 }
 
-h3{
-margin-top:0;
-}
-
-.ranking-item{
-display:flex;
-justify-content:space-between;
-padding:6px 0;
-border-bottom:1px solid #374151;
-}
-
 table{
 width:100%;
 border-collapse:collapse;
@@ -85,33 +69,16 @@ padding:8px;
 border-bottom:1px solid #374151;
 }
 
-.check{
-color:#22c55e;
-font-weight:bold;
-font-size:18px;
-}
-
-.cross{
-color:#ef4444;
-font-weight:bold;
-font-size:18px;
-}
-
-input,select,button{
-padding:8px;
-border-radius:6px;
-border:none;
-margin:5px 0;
-}
+.check{color:#22c55e;font-size:18px;}
+.cross{color:#ef4444;font-size:18px;}
 
 button{
 background:#2563eb;
 color:white;
+padding:8px 14px;
+border:none;
+border-radius:6px;
 cursor:pointer;
-}
-
-button:hover{
-background:#1d4ed8;
 }
 
 </style>
@@ -121,16 +88,13 @@ background:#1d4ed8;
 
 <div class="header">
 
-<div class="title">Dashboard Iglesia</div>
-
 <div>
-<div>Total General</div>
-<div class="kpi" id="total"></div>
+<h2>Dashboard Iglesia</h2>
 </div>
 
 <div>
-<div>Crecimiento</div>
-<div class="kpi" id="crecimiento"></div>
+<div>Total General</div>
+<div class="kpi" id="total">0</div>
 </div>
 
 </div>
@@ -153,9 +117,10 @@ background:#1d4ed8;
 
 <div class="card">
 
-<h3>Asistencia por Ministerio</h3>
+<h3>Buscar por Ministerio</h3>
 
 <select id="ministerioSelect"></select>
+<button onclick="buscarMinisterio()">Buscar</button>
 
 <div id="tablaMinisterio"></div>
 
@@ -165,8 +130,7 @@ background:#1d4ed8;
 
 <h3>Buscar Servidor</h3>
 
-<input id="buscarServidor" placeholder="Nombre del servidor">
-
+<select id="servidorSelect"></select>
 <button onclick="buscarServidor()">Buscar</button>
 
 <div id="resultadoServidor"></div>
@@ -177,25 +141,32 @@ background:#1d4ed8;
 
 <script>
 
-const URL1="https://script.google.com/macros/s/AKfycbxUaSdMaOFVRIiYYM1qGaMLlDENXxbouY3vXfzvm8t8TpenfUreP26WvdmNQOgwoaUU/exec?accion=dashboardpro";
-const URL2="https://script.google.com/macros/s/AKfycbxUaSdMaOFVRIiYYM1qGaMLlDENXxbouY3vXfzvm8t8TpenfUreP26WvdmNQOgwoaUU/exec?accion=datoscompletos";
+const URL1="https://script.google.com/macros/s/AKfycbzjjVAdBnKY2aMl6OXSVIxfSuZGivbA5w_E9zGiZ0WM2I1Tl0mrcIbs_qaUxSZt0BJW/exec?accion=dashboardpro";
+const URL2="https://script.google.com/macros/s/AKfycbzjjVAdBnKY2aMl6OXSVIxfSuZGivbA5w_E9zGiZ0WM2I1Tl0mrcIbs_qaUxSZt0BJW/exec?accion=datoscompletos";
 
 let datosGlobal;
+let chart;
 
 async function iniciar(){
 
-const r1=await fetch(URL1);
-const data=await r1.json();
+await actualizarDashboard();
+await cargarDatosGlobal();
+
+}
+
+async function actualizarDashboard(){
+
+const res=await fetch(URL1);
+const data=await res.json();
 
 document.getElementById("total").innerText=data.totalGeneral;
-document.getElementById("crecimiento").innerText=data.crecimiento+"%";
 
-const sesionesOrdenadas=data.sesiones.sort((a,b)=>a.id-b.id);
+const nombres=data.sesiones.map(s=>s.nombre);
+const totales=data.sesiones.map(s=>s.total);
 
-const nombres=sesionesOrdenadas.map(s=>s.nombre);
-const totales=sesionesOrdenadas.map(s=>s.total);
+if(chart){chart.destroy();}
 
-new Chart(document.getElementById("chartSesiones"),{
+chart=new Chart(document.getElementById("chartSesiones"),{
 
 type:"bar",
 
@@ -208,40 +179,61 @@ backgroundColor:"#3b82f6"
 }]
 },
 
-plugins:[ChartDataLabels],
-
-options:{
-plugins:{
-datalabels:{
-color:"#fff",
-anchor:"end",
-align:"top",
-font:{weight:"bold"}
-}
-}
-}
+plugins:[ChartDataLabels]
 
 });
 
-let html="";
+let html="<table>";
 
-data.rankingMinisterios.forEach((m,i)=>{
+html+="<tr><th>Ministerio</th>";
 
-html+=`
-<div class="ranking-item">
-<span>#${i+1} ${m.ministerio}</span>
-<strong>${m.total}</strong>
-</div>
-`;
+data.sesiones.forEach(s=>{
+html+=`<th>${s.nombre}</th>`;
+});
+
+html+="<th>Total</th></tr>";
+
+data.rankingMinisterios.forEach(m=>{
+
+html+=`<tr><td>${m.ministerio}</td>`;
+
+let total=0;
+
+data.sesiones.forEach(s=>{
+
+let val=0;
+
+if(datosGlobal &&
+datosGlobal.ministerios[m.ministerio] &&
+datosGlobal.ministerios[m.ministerio][s.id]){
+
+val=datosGlobal.ministerios[m.ministerio][s.id];
+
+}
+
+total+=val;
+
+html+=`<td>${val}</td>`;
 
 });
+
+html+=`<td><b>${total}</b></td></tr>`;
+
+});
+
+html+="</table>";
 
 document.getElementById("ranking").innerHTML=html;
 
-const r2=await fetch(URL2);
-datosGlobal=await r2.json();
+}
+
+async function cargarDatosGlobal(){
+
+const res=await fetch(URL2);
+datosGlobal=await res.json();
 
 cargarMinisterios();
+cargarServidores();
 
 }
 
@@ -250,9 +242,7 @@ function cargarMinisterios(){
 const select=document.getElementById("ministerioSelect");
 select.innerHTML="";
 
-const ministerios=Object.keys(datosGlobal.servidoresPorMinisterio);
-
-ministerios.forEach(m=>{
+Object.keys(datosGlobal.servidoresPorMinisterio).forEach(m=>{
 
 const op=document.createElement("option");
 op.value=m;
@@ -264,22 +254,36 @@ select.appendChild(op);
 
 }
 
-function mostrarMinisterio(){
+function cargarServidores(){
+
+const select=document.getElementById("servidorSelect");
+select.innerHTML="";
+
+Object.keys(datosGlobal.asistenciaServidor).forEach(n=>{
+
+const op=document.createElement("option");
+op.value=n;
+op.text=n;
+
+select.appendChild(op);
+
+});
+
+}
+
+function buscarMinisterio(){
 
 const m=document.getElementById("ministerioSelect").value;
 
 const sesiones=Object.keys(datosGlobal.sesiones);
-
-const servidores=datosGlobal.servidores[m];
+const servidores=datosGlobal.servidoresPorMinisterio[m];
 
 let html="<table>";
 
 html+="<tr><th>Servidor</th>";
 
 sesiones.forEach(s=>{
-
 html+=`<th>${datosGlobal.sesiones[s]}</th>`;
-
 });
 
 html+="</tr>";
@@ -308,7 +312,7 @@ document.getElementById("tablaMinisterio").innerHTML=html;
 
 function buscarServidor(){
 
-const nombre=document.getElementById("buscarServidor").value;
+const nombre=document.getElementById("servidorSelect").value;
 
 const sesiones=Object.keys(datosGlobal.sesiones);
 
@@ -337,7 +341,7 @@ document.getElementById("resultadoServidor").innerHTML=html;
 
 iniciar();
 
-setInterval(()=>location.reload(),30000);
+setInterval(actualizarDashboard,30000);
 
 </script>
 

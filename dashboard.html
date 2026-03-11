@@ -117,6 +117,28 @@ cursor:pointer;
 
 <div class="card">
 
+<h2>Asistencia Global</h2>
+
+<input type="date" id="fecha">
+
+<button onclick="cargarAsistenciaGlobal()">
+Ver asistencia
+</button>
+
+<table>
+
+<thead>
+<tr>
+<th>Grupo</th>
+<th>Asistencia</th>
+</tr>
+</thead>
+
+<tbody id="tablaAsistencia"></tbody>
+
+</table>
+
+  
 <h3>Buscar por Ministerio</h3>
 
 <select id="ministerioSelect"></select>
@@ -152,6 +174,45 @@ async function iniciar(){
 await cargarDatosGlobal();
 await actualizarDashboard();
 
+const API="TU_URL_DE_APPS_SCRIPT";
+
+function cargarAsistenciaGlobal(){
+
+let fecha=document.getElementById("fecha").value;
+
+fetch(API,{
+method:"POST",
+body:JSON.stringify({
+action:"dashboard",
+fecha:fecha
+})
+})
+.then(r=>r.json())
+.then(data=>{
+
+let tabla=document.getElementById("tablaAsistencia");
+
+tabla.innerHTML="";
+
+data.forEach(g=>{
+
+tabla.innerHTML+=`
+
+<tr>
+<td>${g.grupo}</td>
+<td>${g.asistencia}</td>
+</tr>
+
+`;
+
+});
+
+});
+
+}
+
+
+  
 }
 
 async function actualizarDashboard(){

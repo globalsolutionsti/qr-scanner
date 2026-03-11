@@ -165,16 +165,9 @@ Ver asistencia
 
 const URL1="https://script.google.com/macros/s/AKfycbxD-2Rm7ksCuqhMCDUPD3t5QrJUtAPvK6fCTkA8cphTss4caYMaHB-Afpj8PGMqkMUE/exec?accion=dashboardpro";
 const URL2="https://script.google.com/macros/s/AKfycbxD-2Rm7ksCuqhMCDUPD3t5QrJUtAPvK6fCTkA8cphTss4caYMaHB-Afpj8PGMqkMUE/exec?accion=datoscompletos";
-
+const API="https://script.google.com/macros/s/AKfycbxD-2Rm7ksCuqhMCDUPD3t5QrJUtAPvK6fCTkA8cphTss4caYMaHB-Afpj8PGMqkMUE/exec";
 let datosGlobal;
 let chart;
-
-async function iniciar(){
-
-await cargarDatosGlobal();
-await actualizarDashboard();
-
-const API="https://script.google.com/macros/s/AKfycbxD-2Rm7ksCuqhMCDUPD3t5QrJUtAPvK6fCTkA8cphTss4caYMaHB-Afpj8PGMqkMUE/exec";
 
 function cargarAsistenciaGlobal(){
 
@@ -213,6 +206,11 @@ tabla.innerHTML+=`
 
 
   
+async function iniciar(){
+
+await cargarDatosGlobal();
+await actualizarDashboard();
+
 }
 
 async function actualizarDashboard(){
@@ -294,6 +292,11 @@ document.getElementById("ranking").innerHTML=html;
 
 }
 
+
+
+
+
+  
 async function cargarDatosGlobal(){
 
 const res=await fetch(URL2);
